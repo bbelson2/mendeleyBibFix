@@ -330,6 +330,30 @@ int main(int argc, char *argv[])
 						curBibLength - indEOL + 1);
 					curBibLength -= indEOL - curBibInd;
 					curBibInd--; // Correct index so that line after URL is read correctly
+				}else if(bUrlException
+					&& !strncmp(&curBibEntry[curBibInd+1], "url =",5))
+				{	// Entry has a URL and it should not be removed. Escape underscores.
+					unsigned long i;
+					indEOL = findEndOfLine(curBibEntry, curBibInd+1);
+					unsigned long underscores = 0;
+					for (i = curBibInd+1; i < indEOL; i++) {
+						if (curBibEntry[i] == '_') {
+							underscores++;
+						}
+					}
+					if (underscores) {
+						curBibEntry = realloc(curBibEntry, (curBibLength + 1 + underscores)*sizeof(char));
+						for (i = curBibInd+1; i < indEOL; i++) {
+							if (curBibEntry[i] == '_') {
+								memmove(&curBibEntry[i+1], &curBibEntry[i], 
+									curBibLength + 1 + underscores - i);
+								curBibEntry[i] = '\\';
+								i++;
+								indEOL++;
+							}
+						}
+					}
+					curBibLength += underscores;
 				} else if(!strncmp(&curBibEntry[curBibInd+1], "year =",6))
 				{ 	// This entry defines the year
 					bHasYear = true;
